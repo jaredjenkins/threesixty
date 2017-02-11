@@ -15,6 +15,11 @@ const threesixty = (container, images, options) => {
   const o = Object.assign({}, defaults, options)
   const totalFrames = images.length
 
+  const isTouchSupported = 'ontouchstart' in window
+  const startEvent = isTouchSupported ? 'touchstart' : 'mousedown'
+  const stopEvent = isTouchSupported ? 'touchend' : 'mouseup'
+  const moveEvent = isTouchSupported ? 'touchmove' : 'mousemove'
+
   let mouseX = 0
   let oldMouseX = 0
 
@@ -65,8 +70,7 @@ const threesixty = (container, images, options) => {
   //------------------------------------------------------------------------------
 
   const initListeners = () => {
-    container.addEventListener('touchstart', startDrag)
-    container.addEventListener('mousedown', startDrag)
+    container.addEventListener(startEvent, startDrag)
   }
 
   const drag = (e) => {
@@ -85,18 +89,14 @@ const threesixty = (container, images, options) => {
 
   const startDrag = (e) => {
     e.preventDefault()
-    document.addEventListener('touchmove', drag)
-    document.addEventListener('mousemove', drag)
-    document.addEventListener('touchend', stopDrag)
-    document.addEventListener('mouseup', stopDrag)
+    document.addEventListener(moveEvent, drag)
+    document.addEventListener(stopEvent, stopDrag)
   }
 
   const stopDrag = (e) => {
     e.preventDefault()
-    document.removeEventListener('touchmove', drag)
-    document.removeEventListener('mousemove', drag)
-    document.addEventListener('touchend', stopDrag)
-    document.addEventListener('mouseup', stopDrag)
+    document.removeEventListener(moveEvent, drag)
+    document.removeEventListener(stopEvent, stopDrag)
   }
 
   //------------------------------------------------------------------------------
@@ -124,6 +124,34 @@ const threesixty = (container, images, options) => {
   const isInteractive = () => o.interactive
   const getCurrentFrame = () => o.currentFrame
 
+  const goToFrame = (frame) => {
+    o.currentFrame = frame
+    replaceImage()
+  }
+
+  let oldImgSrc, oldImgPosition
+
+  const swapImage = function swapImage(src){
+    if(oldImgPosition != o.currentFrame || oldImgSrc != images[o.currentFrame].src){
+      resetImage()
+    }
+
+    if(src != ''){
+      oldImgPosition = o.currentFrame
+      oldImgSrc = images[o.currentFrame].src
+
+      images[o.currentFrame].src = src
+      replaceImage()
+    }
+  }
+
+  const resetImage = function resetImage(){
+    if(typeof(oldImgPosition) !== 'undefined'){
+      images[oldImgPosition].src = oldImgSrc
+      replaceImage()
+    }
+  }
+
   //------------------------------------------------------------------------------
   //
   //  API
@@ -135,7 +163,12 @@ const threesixty = (container, images, options) => {
     previous,
     next,
     isInteractive,
-    getCurrentFrame
+    getCurrentFrame,
+    goToFrame,
+    swapImage,
+    resetImage,
+    totalFrames,
+    images
   }
 }
 

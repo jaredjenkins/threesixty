@@ -84,6 +84,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var o = Object.assign({}, defaults, options);
 	  var totalFrames = images.length;
 
+	  var isTouchSupported = 'ontouchstart' in window;
+	  var startEvent = isTouchSupported ? 'touchstart' : 'mousedown';
+	  var stopEvent = isTouchSupported ? 'touchend' : 'mouseup';
+	  var moveEvent = isTouchSupported ? 'touchmove' : 'mousemove';
+
 	  var mouseX = 0;
 	  var oldMouseX = 0;
 
@@ -134,8 +139,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  //------------------------------------------------------------------------------
 
 	  var initListeners = function initListeners() {
-	    container.addEventListener('touchstart', startDrag);
-	    container.addEventListener('mousedown', startDrag);
+	    container.addEventListener(startEvent, startDrag);
 	  };
 
 	  var drag = function drag(e) {
@@ -154,18 +158,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  var startDrag = function startDrag(e) {
 	    e.preventDefault();
-	    document.addEventListener('touchmove', drag);
-	    document.addEventListener('mousemove', drag);
-	    document.addEventListener('touchend', stopDrag);
-	    document.addEventListener('mouseup', stopDrag);
+	    document.addEventListener(moveEvent, drag);
+	    document.addEventListener(stopEvent, stopDrag);
 	  };
 
 	  var stopDrag = function stopDrag(e) {
 	    e.preventDefault();
-	    document.removeEventListener('touchmove', drag);
-	    document.removeEventListener('mousemove', drag);
-	    document.addEventListener('touchend', stopDrag);
-	    document.addEventListener('mouseup', stopDrag);
+	    document.removeEventListener(moveEvent, drag);
+	    document.removeEventListener(stopEvent, stopDrag);
 	  };
 
 	  //------------------------------------------------------------------------------
@@ -197,6 +197,35 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return o.currentFrame;
 	  };
 
+	  var goToFrame = function goToFrame(frame) {
+	    o.currentFrame = frame;
+	    replaceImage();
+	  };
+
+	  var oldImgSrc = void 0,
+	      oldImgPosition = void 0;
+
+	  var swapImage = function swapImage(src) {
+	    if (oldImgPosition != o.currentFrame || oldImgSrc != images[o.currentFrame].src) {
+	      resetImage();
+	    }
+
+	    if (src != '') {
+	      oldImgPosition = o.currentFrame;
+	      oldImgSrc = images[o.currentFrame].src;
+
+	      images[o.currentFrame].src = src;
+	      replaceImage();
+	    }
+	  };
+
+	  var resetImage = function resetImage() {
+	    if (typeof oldImgPosition !== 'undefined') {
+	      images[oldImgPosition].src = oldImgSrc;
+	      replaceImage();
+	    }
+	  };
+
 	  //------------------------------------------------------------------------------
 	  //
 	  //  API
@@ -208,7 +237,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    previous: previous,
 	    next: next,
 	    isInteractive: isInteractive,
-	    getCurrentFrame: getCurrentFrame
+	    getCurrentFrame: getCurrentFrame,
+	    goToFrame: goToFrame,
+	    swapImage: swapImage,
+	    resetImage: resetImage,
+	    totalFrames: totalFrames,
+	    images: images
 	  };
 	};
 
