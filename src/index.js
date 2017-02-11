@@ -1,33 +1,22 @@
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-var threesixty = function threesixty(container, images, options) {
+const threesixty = (container, images, options) => {
   if (!container) {
-    throw new Error('A container argument is required');
+    throw new Error('A container argument is required')
   }
 
   if (!images) {
-    throw new Error('An images argument is required');
+    throw new Error('An images argument is required')
   }
 
-  var defaults = {
+  const defaults = {
     interactive: true,
     currentFrame: 0
-  };
+  }
 
-  var o = Object.assign({}, defaults, options);
+  const o = Object.assign({}, defaults, options)
+  const totalFrames = images.length
 
-  var isTouchSupported = 'ontouchstart' in window;
-  var startEvent = isTouchSupported ? 'touchstart' : 'mousedown';
-  var stopEvent = isTouchSupported ? 'touchend' : 'mouseup';
-  var moveEvent = isTouchSupported ? 'touchmove' : 'mousemove';
-
-  var totalFrames = images.length;
-
-  var mouseX = 0;
-  var oldMouseX = 0;
+  let mouseX = 0
+  let oldMouseX = 0
 
   //------------------------------------------------------------------------------
   //
@@ -35,40 +24,39 @@ var threesixty = function threesixty(container, images, options) {
   //
   //------------------------------------------------------------------------------
 
-  var init = function init() {
-    preloadimages(images, start);
-  };
+  const init = () => {
+    preloadimages(images, start)
+  }
 
-  var preloadimages = function preloadimages(sourceImages, cb) {
+  const preloadimages = (sourceImages, cb) => {
+    const total = sourceImages.length
+    let loaded = 0
 
-    var total = sourceImages.length;
-    var loaded = 0;
+    const onload = () => {
+      if (++loaded >= total) cb(finalImages)
+    }
 
-    var onload = function onload() {
-      if (++loaded >= total) cb(finalImages);
-    };
+    const finalImages = sourceImages.map((item) => {
+      const image = new Image()
+      image.src = item
+      image.onload = onload
+      image.onerror = onload
+      image.onabort = onload
+      image.draggable = false
+      return image
+    })
+  }
 
-    var finalImages = sourceImages.map(function (item) {
-      var image = new Image();
-      image.src = item;
-      image.onload = onload;
-      image.onerror = onload;
-      image.onabort = onload;
-      image.draggable = false;
-      return image;
-    });
-  };
+  const start = (loadedImages) => {
+    images = loadedImages
 
-  var start = function start(loadedImages) {
-    images = loadedImages;
-
-    emptyDomNode(container);
-    container.appendChild(images[o.currentFrame]);
+    emptyDomNode(container)
+    container.appendChild(images[o.currentFrame])
 
     if (o.interactive) {
-      initListeners();
+      initListeners()
     }
-  };
+  }
 
   //------------------------------------------------------------------------------
   //
@@ -76,35 +64,40 @@ var threesixty = function threesixty(container, images, options) {
   //
   //------------------------------------------------------------------------------
 
-  var initListeners = function initListeners() {
-    container.addEventListener(startEvent, startDrag);
-  };
+  const initListeners = () => {
+    container.addEventListener('touchstart', startDrag)
+    container.addEventListener('mousedown', startDrag)
+  }
 
-  var drag = function drag(e) {
-    e.preventDefault();
+  const drag = (e) => {
+    e.preventDefault()
 
-    mouseX = e.pageX !== undefined ? e.pageX : e.changedTouches[0].pageX;
+    mouseX = (e.pageX !== undefined) ? e.pageX : e.changedTouches[0].pageX
 
     if (mouseX < oldMouseX) {
-      previous();
+      previous()
     } else if (mouseX > oldMouseX) {
-      next();
+      next()
     }
 
-    oldMouseX = mouseX;
-  };
+    oldMouseX = mouseX
+  }
 
-  var startDrag = function startDrag(e) {
-    e.preventDefault();
-    document.addEventListener(moveEvent, drag);
-    document.addEventListener(stopEvent, stopDrag);
-  };
+  const startDrag = (e) => {
+    e.preventDefault()
+    document.addEventListener('touchmove', drag)
+    document.addEventListener('mousemove', drag)
+    document.addEventListener('touchend', stopDrag)
+    document.addEventListener('mouseup', stopDrag)
+  }
 
-  var stopDrag = function stopDrag(e) {
-    e.preventDefault();
-    document.removeEventListener(moveEvent, drag);
-    document.removeEventListener(stopEvent, stopDrag);
-  };
+  const stopDrag = (e) => {
+    e.preventDefault()
+    document.removeEventListener('touchmove', drag)
+    document.removeEventListener('mousemove', drag)
+    document.addEventListener('touchend', stopDrag)
+    document.addEventListener('mouseup', stopDrag)
+  }
 
   //------------------------------------------------------------------------------
   //
@@ -112,62 +105,24 @@ var threesixty = function threesixty(container, images, options) {
   //
   //------------------------------------------------------------------------------
 
-  var replaceImage = function replaceImage() {
-    container.replaceChild(images[o.currentFrame], container.childNodes[0]);
-  };
-
-  var previous = function previous() {
-    o.currentFrame--;
-    if (o.currentFrame < 0) o.currentFrame = totalFrames - 1;
-    replaceImage();
-  };
-
-  var next = function next() {
-    o.currentFrame++;
-    if (o.currentFrame === totalFrames) o.currentFrame = 0;
-    replaceImage();
-  };
-
-  var isInteractive = function isInteractive() {
-    return o.interactive;
-  };
-  var getCurrentFrame = function getCurrentFrame() {
-    return o.currentFrame;
-  };
-
-  var goToFrame = function goToFrame( frame ){
-    o.currentFrame = frame;
-    replaceImage();
+  const replaceImage = () => {
+    container.replaceChild(images[o.currentFrame], container.childNodes[0])
   }
 
-  var oldImgSrc,
-      oldImgPosition;
-
-  var swapImage = function swapImage(src){
-
-    if( oldImgPosition != o.currentFrame ||  oldImgSrc != images[o.currentFrame].src){
-      resetImage();
-    }
-
-    if( src != '' ){
-
-      oldImgPosition = o.currentFrame;
-      oldImgSrc = images[o.currentFrame].src;
-
-      images[o.currentFrame].src = src;
-      replaceImage();
-
-    }
-
+  const previous = () => {
+    o.currentFrame--
+    if (o.currentFrame < 0) o.currentFrame = totalFrames - 1
+    replaceImage()
   }
 
-  var resetImage = function resetImage(){
-
-      if(typeof(oldImgPosition) !== 'undefined'){
-        images[oldImgPosition].src = oldImgSrc;
-        replaceImage();
-      }
+  const next = () => {
+    o.currentFrame++
+    if (o.currentFrame === totalFrames) o.currentFrame = 0
+    replaceImage()
   }
+
+  const isInteractive = () => o.interactive
+  const getCurrentFrame = () => o.currentFrame
 
   //------------------------------------------------------------------------------
   //
@@ -176,19 +131,13 @@ var threesixty = function threesixty(container, images, options) {
   //------------------------------------------------------------------------------
 
   return {
-    init: init,
-    previous: previous,
-    next: next,
-    isInteractive: isInteractive,
-    getCurrentFrame: getCurrentFrame,
-    goToFrame: goToFrame,
-    swapImage: swapImage,
-    resetImage: resetImage,
-    totalFrames: totalFrames,
-    images: images
-  };
-
-};
+    init,
+    previous,
+    next,
+    isInteractive,
+    getCurrentFrame
+  }
+}
 
 //------------------------------------------------------------------------------
 //
@@ -196,13 +145,12 @@ var threesixty = function threesixty(container, images, options) {
 //
 //------------------------------------------------------------------------------
 
-var emptyDomNode = function emptyDomNode(element) {
+const emptyDomNode = (element) => {
   if (element.hasChildNodes()) {
     while (element.firstChild) {
-      element.removeChild(element.firstChild);
+      element.removeChild(element.firstChild)
     }
   }
-};
+}
 
-exports.default = threesixty;
-module.exports = exports['default'];
+export default threesixty
