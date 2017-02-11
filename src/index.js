@@ -1,22 +1,33 @@
-const threesixty = (container, images, options) => {
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var threesixty = function threesixty(container, images, options) {
   if (!container) {
-    throw new Error('A container argument is required')
+    throw new Error('A container argument is required');
   }
 
   if (!images) {
-    throw new Error('An images argument is required')
+    throw new Error('An images argument is required');
   }
 
-  const defaults = {
+  var defaults = {
     interactive: true,
     currentFrame: 0
-  }
+  };
 
-  const o = Object.assign({}, defaults, options)
-  const totalFrames = images.length
+  var o = Object.assign({}, defaults, options);
 
-  let mouseX = 0
-  let oldMouseX = 0
+  var isTouchSupported = 'ontouchstart' in window;
+  var startEvent = isTouchSupported ? 'touchstart' : 'mousedown';
+  var stopEvent = isTouchSupported ? 'touchend' : 'mouseup';
+  var moveEvent = isTouchSupported ? 'touchmove' : 'mousemove';
+
+  var totalFrames = images.length;
+
+  var mouseX = 0;
+  var oldMouseX = 0;
 
   //------------------------------------------------------------------------------
   //
@@ -24,39 +35,40 @@ const threesixty = (container, images, options) => {
   //
   //------------------------------------------------------------------------------
 
-  const init = () => {
-    preloadimages(images, start)
-  }
+  var init = function init() {
+    preloadimages(images, start);
+  };
 
-  const preloadimages = (sourceImages, cb) => {
-    const total = sourceImages.length
-    let loaded = 0
+  var preloadimages = function preloadimages(sourceImages, cb) {
 
-    const onload = () => {
-      if (++loaded >= total) cb(finalImages)
-    }
+    var total = sourceImages.length;
+    var loaded = 0;
 
-    const finalImages = sourceImages.map((item) => {
-      const image = new Image()
-      image.src = item
-      image.onload = onload
-      image.onerror = onload
-      image.onabort = onload
-      image.draggable = false
-      return image
-    })
-  }
+    var onload = function onload() {
+      if (++loaded >= total) cb(finalImages);
+    };
 
-  const start = (loadedImages) => {
-    images = loadedImages
+    var finalImages = sourceImages.map(function (item) {
+      var image = new Image();
+      image.src = item;
+      image.onload = onload;
+      image.onerror = onload;
+      image.onabort = onload;
+      image.draggable = false;
+      return image;
+    });
+  };
 
-    emptyDomNode(container)
-    container.appendChild(images[o.currentFrame])
+  var start = function start(loadedImages) {
+    images = loadedImages;
+
+    emptyDomNode(container);
+    container.appendChild(images[o.currentFrame]);
 
     if (o.interactive) {
-      initListeners()
+      initListeners();
     }
-  }
+  };
 
   //------------------------------------------------------------------------------
   //
@@ -64,40 +76,35 @@ const threesixty = (container, images, options) => {
   //
   //------------------------------------------------------------------------------
 
-  const initListeners = () => {
-    container.addEventListener('touchstart', startDrag)
-    container.addEventListener('mousedown', startDrag)
-  }
+  var initListeners = function initListeners() {
+    container.addEventListener(startEvent, startDrag);
+  };
 
-  const drag = (e) => {
-    e.preventDefault()
+  var drag = function drag(e) {
+    e.preventDefault();
 
-    mouseX = (e.pageX !== undefined) ? e.pageX : e.changedTouches[0].pageX
+    mouseX = e.pageX !== undefined ? e.pageX : e.changedTouches[0].pageX;
 
     if (mouseX < oldMouseX) {
-      previous()
+      previous();
     } else if (mouseX > oldMouseX) {
-      next()
+      next();
     }
 
-    oldMouseX = mouseX
-  }
+    oldMouseX = mouseX;
+  };
 
-  const startDrag = (e) => {
-    e.preventDefault()
-    document.addEventListener('touchmove', drag)
-    document.addEventListener('mousemove', drag)
-    document.addEventListener('touchend', stopDrag)
-    document.addEventListener('mouseup', stopDrag)
-  }
+  var startDrag = function startDrag(e) {
+    e.preventDefault();
+    document.addEventListener(moveEvent, drag);
+    document.addEventListener(stopEvent, stopDrag);
+  };
 
-  const stopDrag = (e) => {
-    e.preventDefault()
-    document.removeEventListener('touchmove', drag)
-    document.removeEventListener('mousemove', drag)
-    document.addEventListener('touchend', stopDrag)
-    document.addEventListener('mouseup', stopDrag)
-  }
+  var stopDrag = function stopDrag(e) {
+    e.preventDefault();
+    document.removeEventListener(moveEvent, drag);
+    document.removeEventListener(stopEvent, stopDrag);
+  };
 
   //------------------------------------------------------------------------------
   //
@@ -105,24 +112,62 @@ const threesixty = (container, images, options) => {
   //
   //------------------------------------------------------------------------------
 
-  const replaceImage = () => {
-    container.replaceChild(images[o.currentFrame], container.childNodes[0])
+  var replaceImage = function replaceImage() {
+    container.replaceChild(images[o.currentFrame], container.childNodes[0]);
+  };
+
+  var previous = function previous() {
+    o.currentFrame--;
+    if (o.currentFrame < 0) o.currentFrame = totalFrames - 1;
+    replaceImage();
+  };
+
+  var next = function next() {
+    o.currentFrame++;
+    if (o.currentFrame === totalFrames) o.currentFrame = 0;
+    replaceImage();
+  };
+
+  var isInteractive = function isInteractive() {
+    return o.interactive;
+  };
+  var getCurrentFrame = function getCurrentFrame() {
+    return o.currentFrame;
+  };
+
+  var goToFrame = function goToFrame( frame ){
+    o.currentFrame = frame;
+    replaceImage();
   }
 
-  const previous = () => {
-    o.currentFrame--
-    if (o.currentFrame < 0) o.currentFrame = totalFrames - 1
-    replaceImage()
+  var oldImgSrc,
+      oldImgPosition;
+
+  var swapImage = function swapImage(src){
+
+    if( oldImgPosition != o.currentFrame ||  oldImgSrc != images[o.currentFrame].src){
+      resetImage();
+    }
+
+    if( src != '' ){
+
+      oldImgPosition = o.currentFrame;
+      oldImgSrc = images[o.currentFrame].src;
+
+      images[o.currentFrame].src = src;
+      replaceImage();
+
+    }
+
   }
 
-  const next = () => {
-    o.currentFrame++
-    if (o.currentFrame === totalFrames) o.currentFrame = 0
-    replaceImage()
-  }
+  var resetImage = function resetImage(){
 
-  const isInteractive = () => o.interactive
-  const getCurrentFrame = () => o.currentFrame
+      if(typeof(oldImgPosition) !== 'undefined'){
+        images[oldImgPosition].src = oldImgSrc;
+        replaceImage();
+      }
+  }
 
   //------------------------------------------------------------------------------
   //
@@ -131,13 +176,19 @@ const threesixty = (container, images, options) => {
   //------------------------------------------------------------------------------
 
   return {
-    init,
-    previous,
-    next,
-    isInteractive,
-    getCurrentFrame
-  }
-}
+    init: init,
+    previous: previous,
+    next: next,
+    isInteractive: isInteractive,
+    getCurrentFrame: getCurrentFrame,
+    goToFrame: goToFrame,
+    swapImage: swapImage,
+    resetImage: resetImage,
+    totalFrames: totalFrames,
+    images: images
+  };
+
+};
 
 //------------------------------------------------------------------------------
 //
@@ -145,12 +196,13 @@ const threesixty = (container, images, options) => {
 //
 //------------------------------------------------------------------------------
 
-const emptyDomNode = (element) => {
+var emptyDomNode = function emptyDomNode(element) {
   if (element.hasChildNodes()) {
     while (element.firstChild) {
-      element.removeChild(element.firstChild)
+      element.removeChild(element.firstChild);
     }
   }
-}
+};
 
-export default threesixty
+exports.default = threesixty;
+module.exports = exports['default'];
